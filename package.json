@@ -1,0 +1,21 @@
+{
+  "name": "playlist-pomodoro-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application web combinant gestion de tâches Pomodoro, ambiances sonores et éclairage intelligent.",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "build": "npm run build --workspaces --if-present",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
