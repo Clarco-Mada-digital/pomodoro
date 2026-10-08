@@ -1,94 +1,221 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  DEFAULT_BREAK_MINUTES,
+  DEFAULT_CONFIG,
+  DEFAULT_WORK_MINUTES,
+  advanceTimer,
+  applyConfig,
+  createInitialTimer,
+  durationForPhase,
+  formatTime,
+  normalizeDuration,
+  pauseTimer,
+  resetTimer,
+  startTimer,
+  type PomodoroConfig,
+  type PomodoroPhase,
+  type TimerState,
+} from "../pomodoro/core";
+import { playSessionEndChime } from "../pomodoro/sound";
 
-export type PomodoroPhase = "work" | "break";
+export type { PomodoroPhase };
 
-const WORK_DURATION_SECONDS = 25 * 60;
-const BREAK_DURATION_SECONDS = 5 * 60;
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
+const DURATION_ATTRIBUTES = {
+  min: 1,
+  max: 90,
+} as const;
 
 export default function PomodoroTimer() {
-  const [phase, setPhase] = useState<PomodoroPhase>("work");
-  const [remaining, setRemaining] = useState(WORK_DURATION_SECONDS);
-  const [running, setRunning] = useState(false);
-  const intervalRef = useRef<number | null>(null);
+  const [config, setConfig] = useState<PomodoroConfig>(DEFAULT_CONFIG);
+  const [timer, setTimer] = useState<TimerState>(() => createInitialTimer(DEFAULT_CONFIG));
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [workField, setWorkField] = useState(String(DEFAULT_WORK_MINUTES));
+  const [breakField, setBreakField] = useState(String(DEFAULT_BREAK_MINUTES));
 
-  const stop = useCallback(() => {
-    if (intervalRef.current !== null) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setRunning(false);
+  const timerRef = useRef(timer);
+  const configRef = useRef(config);
+  const soundRef = useRef(soundEnabled);
+  timerRef.current = timer;
+  configRef.current = config;
+  soundRef.current = soundEnabled;
+
+  useEffect(() => {
+    if (timer.status !== "running") return undefined;
+
+    const intervalId = window.setInterval(() => {
+      const { state, sessionEnded } = advanceTimer(timerRef.current, configRef.current);
+      timerRef.current = state;
+      setTimer(state);
+
+      if (sessionEnded) {
+        window.clearInterval(intervalId);
+        if (soundRef.current) playSessionEndChime();
+      }
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [timer.status]);
+
+  const start = useCallback(() => setTimer((previous) => startTimer(previous)), []);
+  const pause = useCallback(() => setTimer((previous) => pauseTimer(previous)), []);
+  const reset = useCallback(() => {
+    setTimer(resetTimer(configRef.current));
   }, []);
 
-  const start = useCallback(() => {
-    if (intervalRef.current !== null) return;
-    setRunning(true);
-    intervalRef.current = window.setInterval(() => {
-      setRemaining((previous) => {
-        if (previous <= 1) {
-          setPhase((current) => (current === "work" ? "break" : "work"));
-          return phase === "work" ? BREAK_DURATION_SECONDS : WORK_DURATION_SECONDS;
-        }
-        return previous - 1;
-      });
-    }, 1000);
-  }, [phase]);
+  const updateDuration = useCallback(
+    (patch: Partial<PomodoroConfig>) => {
+      const next: PomodoroConfig = {
+        workMinutes: normalizeDuration(
+          patch.workMinutes ?? configRef.current.workMinutes,
+          DEFAULT_WORK_MINUTES,
+        ),
+        breakMinutes: normalizeDuration(
+          patch.breakMinutes ?? configRef.current.breakMinutes,
+          DEFAULT_BREAK_MINUTES,
+        ),
+      };
+      setConfig(next);
+      setTimer((previous) => applyConfig(previous, next));
+    },
+    [],
+  );
 
-  const reset = useCallback(() => {
-    stop();
-    setPhase("work");
-    setRemaining(WORK_DURATION_SECONDS);
-  }, [stop]);
+  const changeWorkField = (raw: string) => {
+    setWorkField(raw);
+    const parsed = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(parsed)) return;
+    updateDuration({ workMinutes: parsed });
+  };
 
-  useEffect(() => stop, [stop]);
+  const changeBreakField = (raw: string) => {
+    setBreakField(raw);
+    const parsed = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(parsed)) return;
+    updateDuration({ breakMinutes: parsed });
+  };
+
+  const statusLabel =
+    timer.status === "running"
+      ? "Session en cours"
+      : timer.status === "paused"
+        ? "En pause"
+        : "Prêt à démarrer";
+
+  const controlButton =
+    "rounded-xl px-5 py-2 font-medium transition disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-2xl bg-white p-8 shadow-lg dark:bg-slate-900">
+    <section
+      className="mx-auto w-full max-w-md rounded-2xl bg-white p-8 shadow-lg dark:bg-slate-900"
+      aria-label="Minuteur Pomodoro"
+    >
       <header className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold">
-          {phase === "work" ? "Session de concentration" : "Pause régénérante"}
+          {timer.phase === "work" ? "Session de concentration" : "Pause régénérante"}
         </h2>
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${
-            phase === "work"
+            timer.phase === "work"
               ? "bg-focus-50 text-focus-700"
               : "bg-emerald-100 text-emerald-700"
           }`}
         >
-          {phase === "work" ? "25 min" : "5 min"}
+          {durationForPhase(timer.phase, config) / 60} min
         </span>
       </header>
 
       <p
         className="text-center font-mono text-6xl font-bold tracking-tight"
         aria-live="polite"
+        data-testid="time-display"
       >
-        {formatTime(remaining)}
+        {formatTime(timer.remaining)}
+      </p>
+      <p className="mt-2 text-center text-sm text-slate-500" data-testid="timer-status">
+        {statusLabel}
       </p>
 
-      <div className="mt-8 flex justify-center gap-3">
+      <div
+        className="mt-8 flex flex-wrap justify-center gap-3"
+        role="group"
+        aria-label="Commandes du minuteur"
+      >
         <button
           type="button"
-          onClick={running ? stop : start}
-          className="rounded-xl bg-focus-500 px-6 py-2 font-medium text-white transition hover:bg-focus-700"
+          onClick={start}
+          disabled={timer.status === "running"}
+          data-testid="start-button"
+          className={`${controlButton} bg-focus-500 text-white hover:bg-focus-700`}
         >
-          {running ? "Pause" : "Démarrer"}
+          Lancer
+        </button>
+        <button
+          type="button"
+          onClick={pause}
+          disabled={timer.status !== "running"}
+          data-testid="pause-button"
+          className={`${controlButton} bg-amber-500 text-white hover:bg-amber-600`}
+        >
+          Pause
         </button>
         <button
           type="button"
           onClick={reset}
-          className="rounded-xl border border-slate-300 px-6 py-2 font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          title="Reset"
+          data-testid="reset-button"
+          className={`${controlButton} border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800`}
         >
           Réinitialiser
         </button>
       </div>
+
+      <fieldset className="mt-8 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <legend className="px-2 text-sm font-semibold">Configuration des durées</legend>
+
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block text-sm">
+            <span className="text-slate-600 dark:text-slate-300">Travail (min)</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={DURATION_ATTRIBUTES.min}
+              max={DURATION_ATTRIBUTES.max}
+              value={workField}
+              onChange={(event) => changeWorkField(event.target.value)}
+              onBlur={() => setWorkField(String(config.workMinutes))}
+              data-testid="work-duration-input"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 dark:border-slate-600"
+            />
+          </label>
+
+          <label className="block text-sm">
+            <span className="text-slate-600 dark:text-slate-300">Pause (min)</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={DURATION_ATTRIBUTES.min}
+              max={DURATION_ATTRIBUTES.max}
+              value={breakField}
+              onChange={(event) => changeBreakField(event.target.value)}
+              onBlur={() => setBreakField(String(config.breakMinutes))}
+              data-testid="break-duration-input"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 dark:border-slate-600"
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={soundEnabled}
+            onChange={(event) => setSoundEnabled(event.target.checked)}
+            data-testid="sound-toggle"
+          />
+          <span className="text-slate-600 dark:text-slate-300">
+            Notification sonore en fin de session
+          </span>
+        </label>
+      </fieldset>
     </section>
   );
 }

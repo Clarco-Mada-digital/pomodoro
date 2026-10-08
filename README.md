@@ -63,7 +63,10 @@ pomodoro/
 │       ├── main.tsx
 │       ├── App.tsx
 │       ├── index.css
-│       └── components/PomodoroTimer.tsx
+│       ├── components/PomodoroTimer.tsx   # Interface du minuteur (PF-341)
+│       └── pomodoro/
+│           ├── core.ts                    # Logique pure : mm:ss, compte à rebours, config
+│           └── sound.ts                   # Notification sonore de fin de session
 ├── server/                   # Backend Node.js + Express + PostgreSQL
 │   ├── package.json
 │   └── src/
@@ -71,7 +74,8 @@ pomodoro/
 │       ├── db.js
 │       └── routes/pomodoros.js
 └── tests/                    # Tests sans dépendance externe (node:test)
-    └── pf-356-repo-init.test.mjs
+    ├── pf-356-repo-init.test.mjs
+    └── pf-341-pomodoro-timer.test.mjs
 ```
 
 ## 🚀 Démarrage
@@ -110,6 +114,25 @@ npm test
 Les tests s'appuient sur `node:test` (Node.js ≥ 18) et ne nécessitent aucune installation.
 
 - `tests/pf-356-repo-init.test.mjs` — vérifie l'initialisation du dépôt (PF-356) : dépôt Git sur la branche `main`, `README.md` versionné, premier commit `PF-356` présent.
+- `tests/pf-341-pomodoro-timer.test.mjs` — vérifie le minuteur (PF-341) : format `mm:ss`, compte à rebours, bascule travail/pause, bornes de configuration, notification sonore (Web Audio API) et commandes de l'interface.
+
+## ✅ Tâche PF-341 — Timer Pomodoro de base
+
+| Critère d'acceptation | Implémentation |
+|-----------------------|----------------|
+| Boutons Lancer / Pause / Reset fonctionnels | `PomodoroTimer.tsx` : `startTimer` / `pauseTimer` / `resetTimer` (état `idle` \| `running` \| `paused`) |
+| Affichage du temps restant en `mm:ss` | `formatTime()` dans `client/src/pomodoro/core.ts` |
+| Notification sonore en fin de session | `playSessionEndChime()` dans `client/src/pomodoro/sound.ts` (Web Audio API, double note, enveloppe en fade-out), activable/désactivable depuis l'interface |
+| Configuration de la durée des sessions | Champs « Travail (min) » et « Pause (min) » bornés à 1–90 min via `normalizeDuration()` (défaut 25 / 5) |
+
+La logique métier est isolée dans `client/src/pomodoro/core.ts` (fonctions pures, sans DOM) afin d'être testée directement par `node:test`.
+
+| Étape | Description | Statut |
+|-------|-------------|--------|
+| 1 | Concevoir l'interface du timer (commandes, affichage, panneau de configuration) | ✅ |
+| 2 | Implémenter la logique de compte à rebours | ✅ |
+| 3 | Ajouter les notifications sonores | ✅ |
+| 4 | Permettre la configuration des durées | ✅ |
 
 ## ✅ Tâche PF-356 — Initialisation du dépôt
 
