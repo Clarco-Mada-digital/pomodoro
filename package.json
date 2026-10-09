@@ -4,6 +4,10 @@
   "private": true,
   "description": "Application web combinant gestion de tâches Pomodoro, ambiances sonores et éclairage intelligent.",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Clarco-Mada-digital/pomodoro.git"
+  },
   "workspaces": [
     "client",
     "server"

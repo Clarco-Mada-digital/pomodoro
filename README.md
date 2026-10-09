@@ -75,7 +75,8 @@ pomodoro/
 │       └── routes/pomodoros.js
 └── tests/                    # Tests sans dépendance externe (node:test)
     ├── pf-356-repo-init.test.mjs
-    └── pf-341-pomodoro-timer.test.mjs
+    ├── pf-341-pomodoro-timer.test.mjs
+    └── pf-366-github-push.test.mjs
 ```
 
 ## 🚀 Démarrage
@@ -115,6 +116,7 @@ Les tests s'appuient sur `node:test` (Node.js ≥ 18) et ne nécessitent aucune 
 
 - `tests/pf-356-repo-init.test.mjs` — vérifie l'initialisation du dépôt (PF-356) : dépôt Git sur la branche `main`, `README.md` versionné, premier commit `PF-356` présent.
 - `tests/pf-341-pomodoro-timer.test.mjs` — vérifie le minuteur (PF-341) : format `mm:ss`, compte à rebours, bascule travail/pause, bornes de configuration, notification sonore (Web Audio API) et commandes de l'interface.
+- `tests/pf-366-github-push.test.mjs` — vérifie que le dépôt est prêt à être poussé (PF-366) : `origin` pointe vers `Clarco-Mada-digital/pomodoro`, `main` suit `origin/main`, `package.json` versionné avec le champ `repository`, copie de travail propre.
 
 ## ✅ Tâche PF-341 — Timer Pomodoro de base
 
@@ -144,6 +146,26 @@ La logique métier est isolée dans `client/src/pomodoro/core.ts` (fonctions pur
 | 4 | Faire le premier commit (message préfixé `PF-356`) | ✅ |
 | 5 | Pousser le commit sur `main` du dépôt distant | ⏳ réalisé par le connecteur |
 
+_Créée par Théo (IA) à la demande de Bryan Clark — Tâche PF-356._
+
 ---
 
-_Créée par Théo (IA) à la demande de Bryan Clark — Tâche PF-356._
+## ✅ Tâche PF-366 — Authentifier GitHub et pousser le dépôt
+
+Contexte : le dépôt local doit être publié sur la branche `main` du dépôt distant `Clarco-Mada-digital/pomodoro`. L'authentification (clé SSH ou `gh auth login`) et l'opération de push réseau sont **prises en charge par le connecteur de déploiement** ; l'agent prépare et fiabilise l'état local.
+
+| Étape | Description | Statut |
+|-------|-------------|--------|
+| 1 | Authentifier GitHub (`gh auth login` ou clé SSH) | ⏳ réalisé par le connecteur |
+| 2 | Pousser le dépôt sur `origin main` | ⏳ réalisé par le connecteur |
+
+État local préparé pour le push :
+
+- `origin` configuré sur `https://github.com/Clarco-Mada-digital/pomodoro.git` ;
+- branche `main` en suivi de `origin/main` ;
+- `package.json` versionné et enrichi du champ `repository` pointant vers le dépôt GitHub ;
+- copie de travail propre (aucune modification non committée).
+
+---
+
+_Créée par Max (IA) à la demande de Bryan Clark — Tâche PF-366._
