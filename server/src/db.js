@@ -1,8 +1,9 @@
 const { Pool } = require("pg");
 
+const DEFAULT_DATABASE_URL = "postgresql://localhost:5432/pomodoro";
+
 const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL || "postgresql://localhost:5432/pomodoro",
+  connectionString: process.env.DATABASE_URL || DEFAULT_DATABASE_URL,
 });
 
 const CREATE_TABLE_SQL = `
@@ -15,17 +16,23 @@ const CREATE_TABLE_SQL = `
   );
 `;
 
-async function initSchema() {
-  await pool.query(CREATE_TABLE_SQL);
+async function initSchema(database = pool) {
+  await database.query(CREATE_TABLE_SQL);
 }
 
-async function checkDatabase() {
+async function checkDatabase(database = pool) {
   try {
-    await pool.query("SELECT 1");
+    await database.query("SELECT 1");
     return "up";
   } catch {
     return "down";
   }
 }
 
-module.exports = { pool, initSchema, checkDatabase };
+module.exports = {
+  DEFAULT_DATABASE_URL,
+  CREATE_TABLE_SQL,
+  pool,
+  initSchema,
+  checkDatabase,
+};
