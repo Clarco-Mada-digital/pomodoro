@@ -20,17 +20,25 @@ import { playSessionEndChime } from "../pomodoro/sound";
 
 export type { PomodoroPhase };
 
+export interface PomodoroTimerProps {
+  initialConfig?: PomodoroConfig;
+  initialSoundEnabled?: boolean;
+}
+
 const DURATION_ATTRIBUTES = {
   min: 1,
   max: 90,
 } as const;
 
-export default function PomodoroTimer() {
-  const [config, setConfig] = useState<PomodoroConfig>(DEFAULT_CONFIG);
-  const [timer, setTimer] = useState<TimerState>(() => createInitialTimer(DEFAULT_CONFIG));
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [workField, setWorkField] = useState(String(DEFAULT_WORK_MINUTES));
-  const [breakField, setBreakField] = useState(String(DEFAULT_BREAK_MINUTES));
+export default function PomodoroTimer({
+  initialConfig = DEFAULT_CONFIG,
+  initialSoundEnabled = true,
+}: PomodoroTimerProps = {}) {
+  const [config, setConfig] = useState<PomodoroConfig>(initialConfig);
+  const [timer, setTimer] = useState<TimerState>(() => createInitialTimer(initialConfig));
+  const [soundEnabled, setSoundEnabled] = useState(initialSoundEnabled);
+  const [workField, setWorkField] = useState(String(initialConfig.workMinutes));
+  const [breakField, setBreakField] = useState(String(initialConfig.breakMinutes));
 
   const timerRef = useRef(timer);
   const configRef = useRef(config);
