@@ -64,6 +64,9 @@ pomodoro/
 │       ├── App.tsx
 │       ├── index.css
 │       ├── components/PomodoroTimer.tsx   # Interface du minuteur (PF-341)
+│       ├── components/OnboardingFlow.tsx  # Flux d'onboarding (PF-353)
+│       ├── onboarding/
+│       │   └── core.ts                    # Étapes, validation et navigation pures (PF-353)
 │       └── pomodoro/
 │           ├── core.ts                    # Logique pure : mm:ss, compte à rebours, config
 │           └── sound.ts                   # Notification sonore de fin de session
@@ -76,6 +79,7 @@ pomodoro/
 └── tests/                    # Tests sans dépendance externe (node:test)
     ├── pf-356-repo-init.test.mjs
     ├── pf-341-pomodoro-timer.test.mjs
+    ├── pf-353-onboarding.test.mjs
     └── pf-366-github-push.test.mjs
 ```
 
@@ -116,6 +120,7 @@ Les tests s'appuient sur `node:test` (Node.js ≥ 18) et ne nécessitent aucune 
 
 - `tests/pf-356-repo-init.test.mjs` — vérifie l'initialisation du dépôt (PF-356) : dépôt Git sur la branche `main`, `README.md` versionné, premier commit `PF-356` présent.
 - `tests/pf-341-pomodoro-timer.test.mjs` — vérifie le minuteur (PF-341) : format `mm:ss`, compte à rebours, bascule travail/pause, bornes de configuration, notification sonore (Web Audio API) et commandes de l'interface.
+- `tests/pf-353-onboarding.test.mjs` — vérifie le flux d'onboarding (PF-353) : étapes ordonnées, valeurs par défaut, normalisation des préférences, validation par étape, navigation avant/arrière bornée, finalisation, progression et persistance `localStorage`.
 - `tests/pf-366-github-push.test.mjs` — vérifie que le dépôt est prêt à être poussé (PF-366) : `origin` pointe vers `Clarco-Mada-digital/pomodoro`, `main` suit `origin/main`, `package.json` versionné avec le champ `repository`, copie de travail propre.
 
 ## ✅ Tâche PF-341 — Timer Pomodoro de base
@@ -135,6 +140,40 @@ La logique métier est isolée dans `client/src/pomodoro/core.ts` (fonctions pur
 | 2 | Implémenter la logique de compte à rebours | ✅ |
 | 3 | Ajouter les notifications sonores | ✅ |
 | 4 | Permettre la configuration des durées | ✅ |
+
+## ✅ Tâche PF-353 — Flux d'onboarding
+
+Parcours guidé affiché au premier lancement (et relançable via « Revoir la configuration ») qui recueille les préférences de l'utilisateur puis les applique à l'application.
+
+**Étapes de l'onboarding :**
+
+| # | Étape | Contenu |
+|---|-------|---------|
+| 1 | Accueil | Prénom de l'utilisateur |
+| 2 | Sessions | Durées de travail / pause et notification sonore |
+| 3 | Ambiance | Playlist sonore (neutre, jazz, lo-fi, classique) |
+| 4 | Thème | Thème clair, sombre ou système |
+| 5 | Récapitulatif | Vérification puis « Terminer » |
+
+| Critère d'acceptation | Implémentation |
+|-----------------------|----------------|
+| Composants React du flux | `client/src/components/OnboardingFlow.tsx` |
+| Étapes intégrées | `ONBOARDING_STEPS` dans `client/src/onboarding/core.ts`, rendu par `step.id` |
+| Logique de navigation | `canGoNext` / `canGoBack` / `goNext` / `goBack` / `goToStep` / `completeOnboarding` (fonctions pures) |
+| Validation par étape | `validateStep` (prénom requis, durées bornées, ambiance/thème connus) |
+| Persistance | `serializeOnboarding` / `parseOnboarding` sur `localStorage` (`playlist-pomodoro.onboarding`) |
+| Application des préférences | `App.tsx` applique le thème et transmet durées + son à `PomodoroTimer` |
+
+La logique est isolée dans `client/src/onboarding/core.ts` (fonctions pures, sans DOM) afin d'être testée directement par `node:test`.
+
+| Étape | Description | Statut |
+|-------|-------------|--------|
+| 1 | Créer les composants React pour le flux d'onboarding | ✅ |
+| 2 | Intégrer les étapes de l'onboarding | ✅ |
+| 3 | Ajouter la logique de navigation | ✅ |
+| 4 | Tester le flux d'onboarding | ✅ |
+
+_Créée par Théo (IA) à la demande de Bryan Clark — Tâche PF-353._
 
 ## ✅ Tâche PF-356 — Initialisation du dépôt
 
