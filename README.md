@@ -76,7 +76,8 @@ pomodoro/
 └── tests/                    # Tests sans dépendance externe (node:test)
     ├── pf-356-repo-init.test.mjs
     ├── pf-341-pomodoro-timer.test.mjs
-    └── pf-366-github-push.test.mjs
+    ├── pf-366-github-push.test.mjs
+    └── pf-367-package-json.test.mjs
 ```
 
 ## 🚀 Démarrage
@@ -117,6 +118,7 @@ Les tests s'appuient sur `node:test` (Node.js ≥ 18) et ne nécessitent aucune 
 - `tests/pf-356-repo-init.test.mjs` — vérifie l'initialisation du dépôt (PF-356) : dépôt Git sur la branche `main`, `README.md` versionné, premier commit `PF-356` présent.
 - `tests/pf-341-pomodoro-timer.test.mjs` — vérifie le minuteur (PF-341) : format `mm:ss`, compte à rebours, bascule travail/pause, bornes de configuration, notification sonore (Web Audio API) et commandes de l'interface.
 - `tests/pf-366-github-push.test.mjs` — vérifie que le dépôt est prêt à être poussé (PF-366) : `origin` pointe vers `Clarco-Mada-digital/pomodoro`, `main` suit `origin/main`, `package.json` versionné avec le champ `repository`, copie de travail propre.
+- `tests/pf-367-package-json.test.mjs` — vérifie que les modifications de `package.json` sont enregistrées (PF-367) : JSON valide et versionné, métadonnées (`name`, `author`, `keywords`, `homepage`, `repository`), scripts `dev`/`build`/`test`, copie propre, commit tracé `PF-367` et commandes Git documentées dans le README.
 
 ## ✅ Tâche PF-341 — Timer Pomodoro de base
 
@@ -169,3 +171,36 @@ Contexte : le dépôt local doit être publié sur la branche `main` du dépôt 
 ---
 
 _Créée par Max (IA) à la demande de Bryan Clark — Tâche PF-366._
+
+---
+
+## ✅ Tâche PF-367 — Enregistrer les modifications de `package.json`
+
+Objectif : **enregistrer les modifications de `package.json`** puis publier le dépôt sur `origin main`. Le `package.json` racine (workspace) a été complété (métadonnées de publication + script de test en continu), un test de couverture a été ajouté, puis le tout a été enregistré dans un commit préfixé `PF-367`. Le push réseau vers `origin main` reste **pris en charge par le connecteur de déploiement**.
+
+### Étapes suivies pour la modification de `package.json`
+
+| Étape | Description | Statut |
+|-------|-------------|--------|
+| 1 | Enrichir `package.json` (auteur, mots-clés, homepage, bugs, script `test:watch`) | ✅ |
+| 2 | Ajouter le test `tests/pf-367-package-json.test.mjs` | ✅ |
+| 3 | Documenter la tâche dans le `README.md` | ✅ |
+| 4 | Enregistrer les modifications via un commit préfixé `PF-367` | ✅ |
+| 5 | Pousser `main` sur `origin main` | ⏳ réalisé par le connecteur |
+
+### Commandes Git utilisées
+
+```bash
+# 1. Indexer les fichiers modifiés par PF-367
+git add package.json tests/pf-367-package-json.test.mjs README.md
+
+# 2. Enregistrer les modifications (message préfixé « PF-367 »)
+git commit -m "PF-367: enregistrer les métadonnées et scripts de package.json"
+
+# 3. Pousser le dépôt sur origin main
+git push origin main
+```
+
+---
+
+_Créée par Max (IA) à la demande de Bryan Clark — Tâche PF-367._

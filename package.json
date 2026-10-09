@@ -4,6 +4,20 @@
   "private": true,
   "description": "Application web combinant gestion de tâches Pomodoro, ambiances sonores et éclairage intelligent.",
   "license": "UNLICENSED",
+  "author": "Bryan Clark",
+  "keywords": [
+    "pomodoro",
+    "productivité",
+    "concentration",
+    "ambiance",
+    "playlist",
+    "react",
+    "express"
+  ],
+  "homepage": "https://github.com/Clarco-Mada-digital/pomodoro#readme",
+  "bugs": {
+    "url": "https://github.com/Clarco-Mada-digital/pomodoro/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Clarco-Mada-digital/pomodoro.git"
@@ -17,7 +31,8 @@
     "dev:client": "npm run dev --workspace=client",
     "dev:server": "npm run dev --workspace=server",
     "build": "npm run build --workspaces --if-present",
-    "test": "node --test \"tests/**/*.test.mjs\""
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:watch": "node --test --watch \"tests/**/*.test.mjs\""
   },
   "engines": {
     "node": ">=18"
